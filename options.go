@@ -7,3 +7,9 @@ func BaseDir(dir string) Option {
 		x.baseDir = dir
 	}
 }
+
+func FS(f FileSystem) Option {
+	return func(x *XribbleDriver) {
+		x.fs = f
+	}
+}
