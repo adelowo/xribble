@@ -98,3 +98,23 @@ func Test_Xribble_Drop(t *testing.T) {
 	}
 
 }
+
+func Test_Xribble_Delete(t *testing.T) {
+	db := NewXribble()
+
+	db.Add(&Item{"name", []byte("Lanre"), time.Now().Add(time.Hour * 4)})
+
+	if err := db.Delete("name"); err != nil {
+		t.Fatalf(
+			`An error occurred while trying to delete the key, %s ..%v`,
+			err)
+	}
+
+	//Try fetching the key
+
+	if _, err := db.Get("name"); err != ErrDatabaseMiss {
+		t.Fatalf(
+			`Data is supposed not to exist in the database again since
+			it was deleted.. %v`, err)
+	}
+}

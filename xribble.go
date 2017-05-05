@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -37,6 +38,7 @@ type FileSystem interface {
 	Read(path string) ([]byte, error)
 	CreateDirectory(dir string) error
 	Flush(dir string) error
+	Remove(path string) error
 }
 
 type XribbleIO struct {
@@ -90,6 +92,10 @@ func (x *XribbleIO) Flush(dir string) error {
 	return os.RemoveAll(dir)
 }
 
+func (x *XribbleIO) Remove(path string) error {
+	return os.Remove(path)
+}
+
 type Item struct {
 	Key       string    `xml:"info>key"`
 	Value     []byte    `xml:"info>value"`
@@ -104,6 +110,7 @@ type Encrypter interface {
 type Provider interface {
 	Add(i *Item) error
 	Get(key string) (*Item, error)
+	Delete(key string) error
 	Drop() error
 }
 
@@ -178,6 +185,18 @@ func (x *XribbleDriver) Get(key string) (*Item, error) {
 	}
 
 	return i, nil
+}
+
+func (x *XribbleDriver) Delete(key string) error {
+	path := x.path(key)
+
+	if ok := x.fs.IsFile(path); ok {
+		return x.fs.Remove(path)
+	}
+
+	return fmt.Errorf(
+		`xribble: An error occurred while trying to delete the key %s`,
+		key)
 }
 
 func (x *XribbleDriver) Drop() error {
