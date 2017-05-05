@@ -1,6 +1,7 @@
 package xribble
 
 import (
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -72,4 +73,28 @@ func Test_Xribble_Get_unknownKey(t *testing.T) {
 			`Expected error to be a database hit.. Got %v instead`,
 			err)
 	}
+}
+
+func Test_Xribble_Drop(t *testing.T) {
+
+	db := NewXribble()
+
+	if err := db.Drop(); err != nil {
+		t.Fatalf(
+			`An error occurred while trying to flush the database`,
+			err)
+	}
+
+	//Manually assert the directory is gone
+
+	// if ok := db.fs.IsDirectory(db.baseDir); ok {
+	// 	t.Fatalf(
+	// 		`Flush operation failed .. %v`, ok)
+	// 		This should work too
+	// }
+	if _, err := os.Stat(db.baseDir); os.IsExist(err) {
+		t.Fatalf(
+			`Flush operation failed .. %v`, err)
+	}
+
 }

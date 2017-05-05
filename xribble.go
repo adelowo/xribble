@@ -36,6 +36,7 @@ type FileSystem interface {
 	Write(path string, data []byte) error
 	Read(path string) ([]byte, error)
 	CreateDirectory(dir string) error
+	Flush(dir string) error
 }
 
 type XribbleIO struct {
@@ -85,6 +86,10 @@ func (x *XribbleIO) CreateDirectory(dir string) error {
 	return os.MkdirAll(dir, x.dirPermission)
 }
 
+func (x *XribbleIO) Flush(dir string) error {
+	return os.RemoveAll(dir)
+}
+
 type Item struct {
 	Key       string    `xml:"info>key"`
 	Value     []byte    `xml:"info>value"`
@@ -99,6 +104,7 @@ type Encrypter interface {
 type Provider interface {
 	Add(i *Item) error
 	Get(key string) (*Item, error)
+	Drop() error
 }
 
 type Option func(*XribbleDriver)
@@ -172,6 +178,10 @@ func (x *XribbleDriver) Get(key string) (*Item, error) {
 	}
 
 	return i, nil
+}
+
+func (x *XribbleDriver) Drop() error {
+	return x.fs.Flush(x.baseDir)
 }
 
 func (x *XribbleDriver) path(key string) string {
