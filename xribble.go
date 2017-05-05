@@ -34,8 +34,8 @@ type Item struct {
 }
 
 type Encrypter interface {
-	Encrypt(val string) (string, error)
-	Decrypt(val string) (string, error)
+	Encrypt(val []byte) ([]byte, error)
+	Decrypt(cipherText []byte) ([]byte, error)
 }
 
 type Provider interface {
@@ -86,8 +86,8 @@ func (x *XribbleDriver) Add(i *Item) error {
 }
 
 func (x *XribbleDriver) Get(key string) (*Item, error) {
-	x.mu.Lock()
-	defer x.mu.Unlock()
+	x.mu.RLock()
+	defer x.mu.RUnlock()
 
 	path := x.path(key)
 
@@ -111,6 +111,9 @@ func (x *XribbleDriver) Get(key string) (*Item, error) {
 }
 
 func (x *XribbleDriver) Delete(key string) error {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+
 	path := x.path(key)
 
 	if ok := x.fs.IsFile(path); ok {
@@ -123,6 +126,9 @@ func (x *XribbleDriver) Delete(key string) error {
 }
 
 func (x *XribbleDriver) Drop() error {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+
 	return x.fs.Flush(x.baseDir)
 }
 
