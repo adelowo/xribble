@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -18,6 +19,10 @@ const (
 	pathSuffix               string      = ".xml"
 )
 
+var ErrDatabaseMiss error = errors.New(
+	`xribble: Could not fetch the specified item as 
+		it does not exist in the database`)
+
 type XribbleDriver struct {
 	mu      sync.RWMutex
 	baseDir string
@@ -27,7 +32,9 @@ type XribbleDriver struct {
 
 type FileSystem interface {
 	IsDirectory(dir string) bool
+	IsFile(file string) bool
 	Write(path string, data []byte) error
+	Read(path string) ([]byte, error)
 	CreateDirectory(dir string) error
 }
 
@@ -40,6 +47,10 @@ func NewXribbleIO() *XribbleIO {
 	return &XribbleIO{defaultFilePerm, defaultDirectoryFilePerm}
 }
 
+func (x *XribbleIO) Read(path string) ([]byte, error) {
+	return ioutil.ReadFile(path)
+}
+
 func (x *XribbleIO) IsDirectory(dir string) bool {
 	_, err := os.Stat(dir)
 
@@ -49,6 +60,16 @@ func (x *XribbleIO) IsDirectory(dir string) bool {
 
 	return true
 
+}
+
+func (x *XribbleIO) IsFile(file string) bool {
+	_, err := os.Lstat(file)
+
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (x *XribbleIO) Write(path string, data []byte) error {
@@ -77,6 +98,7 @@ type Encrypter interface {
 
 type Provider interface {
 	Add(i *Item) error
+	Get(key string) (*Item, error)
 }
 
 type Option func(*XribbleDriver)
@@ -125,6 +147,31 @@ func (x *XribbleDriver) Add(i *Item) error {
 	}
 
 	return x.fs.Write(x.path(i.Key), output)
+}
+
+func (x *XribbleDriver) Get(key string) (*Item, error) {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+
+	path := x.path(key)
+
+	if ok := x.fs.IsFile(path); !ok {
+		return nil, ErrDatabaseMiss
+	}
+
+	data, err := x.fs.Read(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	i := new(Item)
+
+	if err = xml.Unmarshal(data, i); err != nil {
+		return i, err
+	}
+
+	return i, nil
 }
 
 func (x *XribbleDriver) path(key string) string {
