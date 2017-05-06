@@ -14,6 +14,9 @@ import (
 const (
 	baseDirectory string = "./xribbled"
 	pathSuffix    string = ".xml"
+
+	//An identifier for items that are encrypted
+	encryptedItemSuffix = "_encrypted"
 )
 
 var ErrDatabaseMiss error = errors.New(
@@ -82,7 +85,18 @@ func (x *XribbleDriver) Add(i *Item) error {
 		return err
 	}
 
-	return x.fs.Write(x.path(i.Key), output)
+	p := x.path(i.Key)
+
+	if x.shouldEncrypt() {
+		output, err = x.e.Encrypt(output)
+
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return x.fs.Write(p, output)
 }
 
 func (x *XribbleDriver) Get(key string) (*Item, error) {
@@ -99,6 +113,14 @@ func (x *XribbleDriver) Get(key string) (*Item, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if x.shouldEncrypt() {
+		data, err = x.e.Decrypt(data)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	i := new(Item)
@@ -132,13 +154,25 @@ func (x *XribbleDriver) Drop() error {
 	return x.fs.Flush(x.baseDir)
 }
 
+func (x *XribbleDriver) shouldEncrypt() bool {
+	return x.e != nil
+}
+
 func (x *XribbleDriver) path(key string) string {
 
 	hash := md5.Sum([]byte(key))
 
 	hashSumAsString := hex.EncodeToString(hash[:])
 
-	return filepath.Join(x.baseDir,
+	path := filepath.Join(x.baseDir,
 		string(hashSumAsString[0:2]),
-		string(hashSumAsString[2:4]), hashSumAsString) + pathSuffix
+		string(hashSumAsString[2:4]), hashSumAsString)
+
+	if x.shouldEncrypt() {
+		path = path + encryptedItemSuffix
+	} else {
+		path = path + pathSuffix
+	}
+
+	return path
 }
