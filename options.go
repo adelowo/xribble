@@ -13,3 +13,11 @@ func FS(f FileSystem) Option {
 		x.fs = f
 	}
 }
+
+func Encrypt(status bool) Option {
+	return func(x *XribbleDriver) {
+		if status {
+			x.e = NewXribbleEncrypter()
+		}
+	}
+}
