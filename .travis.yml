@@ -13,5 +13,8 @@ go:
   - 1.8
   - tip
 
+env:
+  XRIBBLE_KEY=some-thirty-two-byte-array
+
 script:
     - $HOME/gopath/bin/goveralls -service=travis-ci
