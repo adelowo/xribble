@@ -26,7 +26,7 @@ func Test_Xribble_Add(t *testing.T) {
 
 	if err := db.Add(i); err != nil {
 		t.Fatalf(
-			`An error occurred while trying to save an item to the database`,
+			`An error occurred while trying to save an item to the database...%v`,
 			err)
 	}
 }
@@ -38,7 +38,7 @@ func Test_Xribble_Get(t *testing.T) {
 
 	if err := db.Add(i); err != nil {
 		t.Fatalf(
-			`An error occurred while trying to save an item to the database`,
+			`An error occurred while trying to save an item to the database..%v`,
 			err)
 	}
 
@@ -46,7 +46,7 @@ func Test_Xribble_Get(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf(
-			`An error occurred while fetching an item from the database`,
+			`An error occurred while fetching an item from the database..%v`,
 			err)
 	}
 
@@ -64,7 +64,7 @@ func Test_Xribble_Get_unknownKey(t *testing.T) {
 
 	if err == nil {
 		t.Fatal(
-			`Error should not contain a nil value 
+			`Error should not contain a nil value
 			because the key does not exist in the database`)
 	}
 
@@ -81,7 +81,7 @@ func Test_Xribble_Drop(t *testing.T) {
 
 	if err := db.Drop(); err != nil {
 		t.Fatalf(
-			`An error occurred while trying to flush the database`,
+			`An error occurred while trying to flush the database..%v`,
 			err)
 	}
 
@@ -93,8 +93,7 @@ func Test_Xribble_Drop(t *testing.T) {
 	// 		This should work too
 	// }
 	if _, err := os.Stat(db.baseDir); os.IsExist(err) {
-		t.Fatalf(
-			`Flush operation failed .. %v`, err)
+		t.Fatalf(`Flush operation failed .. %v`, err)
 	}
 
 }
@@ -107,7 +106,7 @@ func Test_Xribble_Delete(t *testing.T) {
 	if err := db.Delete("name"); err != nil {
 		t.Fatalf(
 			`An error occurred while trying to delete the key, %s ..%v`,
-			err)
+			"name", err)
 	}
 
 	//Try fetching the key
