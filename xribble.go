@@ -20,7 +20,7 @@ const (
 )
 
 var ErrDatabaseMiss error = errors.New(
-	`xribble: Could not fetch the specified item as 
+	`xribble: Could not fetch the specified item as
 		it does not exist in the database`)
 
 type XribbleDriver struct {
@@ -87,7 +87,7 @@ func (x *XribbleDriver) Add(i *Item) error {
 
 	p := x.path(i.Key)
 
-	if x.shouldEncrypt() {
+	if x.isEncrypted() {
 		output, err = x.e.Encrypt(output)
 
 		if err != nil {
@@ -115,7 +115,7 @@ func (x *XribbleDriver) Get(key string) (*Item, error) {
 		return nil, err
 	}
 
-	if x.shouldEncrypt() {
+	if x.isEncrypted() {
 		data, err = x.e.Decrypt(data)
 
 		if err != nil {
@@ -154,7 +154,7 @@ func (x *XribbleDriver) Drop() error {
 	return x.fs.Flush(x.baseDir)
 }
 
-func (x *XribbleDriver) shouldEncrypt() bool {
+func (x *XribbleDriver) isEncrypted() bool {
 	return x.e != nil
 }
 
@@ -168,7 +168,7 @@ func (x *XribbleDriver) path(key string) string {
 		string(hashSumAsString[0:2]),
 		string(hashSumAsString[2:4]), hashSumAsString)
 
-	if x.shouldEncrypt() {
+	if x.isEncrypted() {
 		path = path + encryptedItemSuffix
 	} else {
 		path = path + pathSuffix
